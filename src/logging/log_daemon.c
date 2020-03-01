@@ -45,6 +45,7 @@
 #include "virstring.h"
 #include "virgettext.h"
 #include "virenum.h"
+#include "virdaemon.h"
 
 #include "log_daemon_dispatch.h"
 #include "log_protocol.h"
@@ -417,51 +418,6 @@ virLogDaemonErrorHandler(void *opaque G_GNUC_UNUSED,
     /* Don't do anything, since logging infrastructure already
      * took care of reporting the error */
 }
-
-
-static void
-virLogDaemonSetupLogging(virLogDaemonConfigPtr config,
-                         bool privileged,
-                         bool verbose,
-                         bool godaemon)
-{
-    virLogReset();
-
-    /*
-     * Libvirtd's order of precedence is:
-     * cmdline > environment > config
-     *
-     * Given the precedence, we must process the variables in the opposite
-     * order, each one overriding the previous.
-     */
-    if (config->log_level != 0)
-        virLogSetDefaultPriority(config->log_level);
-
-    /* In case the config is empty, both filters and outputs will become empty,
-     * however we can't start with empty outputs, thus we'll need to define and
-     * setup a default one.
-     */
-    ignore_value(virLogSetFilters(config->log_filters));
-    ignore_value(virLogSetOutputs(config->log_outputs));
-
-    /* If there are some environment variables defined, use those instead */
-    virLogSetFromEnv();
-
-    /*
-     * Command line override for --verbose
-     */
-    if ((verbose) && (virLogGetDefaultPriority() > VIR_LOG_INFO))
-        virLogSetDefaultPriority(VIR_LOG_INFO);
-
-    /* Define the default output. This is only applied if there was no setting
-     * from either the config or the environment.
-     */
-    virLogSetDefaultOutput("virtlogd", godaemon, privileged);
-
-    if (virLogGetNbOutputs() == 0)
-        virLogSetOutputs(virLogGetDefaultOutput());
-}
-
 
 
 /* Display version information. */
@@ -957,8 +913,8 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    virLogDaemonSetupLogging(config, privileged, verbose, godaemon);
-
+    virDaemonSetupLogging((virDaemonLogConfigPtr)(&(config->log_level)),
+                           "virtlogd", privileged, verbose, godaemon);
     if (!pid_file &&
         virPidFileConstructPath(privileged,
                                 RUNSTATEDIR,

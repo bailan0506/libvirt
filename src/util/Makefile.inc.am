@@ -42,7 +42,9 @@ UTIL_SOURCES = \
 	util/virconf.h \
 	util/vircrypto.c \
 	util/vircrypto.h \
-	util/virdbus.c \
+	util/virdaemon.c \
+	util/virdaemon.h \
+        util/virdbus.c \
 	util/virdbus.h \
 	util/virdbuspriv.h \
 	util/virdevmapper.c \

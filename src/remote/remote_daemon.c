@@ -57,6 +57,7 @@
 #include "util/virnetdevopenvswitch.h"
 #include "virsystemd.h"
 #include "virhostuptime.h"
+#include "virdaemon.h"
 
 #include "driver.h"
 
@@ -606,58 +607,6 @@ daemonSetupNetDevOpenvswitch(struct daemonConfig *config)
 }
 
 
-/*
- * Set up the logging environment
- * By default if daemonized all errors go to journald/a logfile
- * but if verbose or error debugging is asked for then also output
- * informational and debug messages. Default size if 64 kB.
- */
-static int
-daemonSetupLogging(struct daemonConfig *config,
-                   bool privileged,
-                   bool verbose,
-                   bool godaemon)
-{
-    virLogReset();
-
-    /*
-     * Logging setup order of precedence is:
-     * cmdline > environment > config
-     *
-     * Given the precedence, we must process the variables in the opposite
-     * order, each one overriding the previous.
-     */
-    if (config->log_level != 0)
-        virLogSetDefaultPriority(config->log_level);
-
-    /* In case the config is empty, both filters and outputs will become empty,
-     * however we can't start with empty outputs, thus we'll need to define and
-     * setup a default one.
-     */
-    ignore_value(virLogSetFilters(config->log_filters));
-    ignore_value(virLogSetOutputs(config->log_outputs));
-
-    /* If there are some environment variables defined, use those instead */
-    virLogSetFromEnv();
-
-    /*
-     * Command line override for --verbose
-     */
-    if ((verbose) && (virLogGetDefaultPriority() > VIR_LOG_INFO))
-        virLogSetDefaultPriority(VIR_LOG_INFO);
-
-    /* Define the default output. This is only applied if there was no setting
-     * from either the config or the environment.
-     */
-    virLogSetDefaultOutput(DAEMON_NAME, godaemon, privileged);
-
-    if (virLogGetNbOutputs() == 0)
-        virLogSetOutputs(virLogGetDefaultOutput());
-
-    return 0;
-}
-
-
 static int
 daemonSetupAccessManager(struct daemonConfig *config)
 {
@@ -1147,7 +1096,9 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (daemonSetupLogging(config, privileged, verbose, godaemon) < 0) {
+    if (virDaemonSetupLogging((virDaemonLogConfigPtr)(&(config->log_level)),
+                              DAEMON_NAME, privileged,
+                              verbose, godaemon) < 0) {
         VIR_ERROR(_("Can't initialize logging"));
         exit(EXIT_FAILURE);
     }

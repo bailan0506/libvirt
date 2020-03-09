@@ -81,14 +81,14 @@ virDaemonLogConfigNew(unsigned int log_level,
                       char *log_outputs)
 {
     virDaemonLogConfigPtr ret;
-        
+
     if (VIR_ALLOC(ret) < 0)
         return NULL;
 
     ret->log_level = log_level;
     ret->log_filters = g_strdup(log_filters);
     ret->log_outputs = g_strdup(log_outputs);
-       
+
     return ret;
 }
 
@@ -97,5 +97,5 @@ virDaemonLogConfigFree(virDaemonLogConfigPtr data)
 {
     VIR_FREE(data->log_filters);
     VIR_FREE(data->log_outputs);
-    VIR_FREE(data);    
+    VIR_FREE(data);
 }

@@ -1907,6 +1907,8 @@ virCryptoHashString;
 virCryptoHaveCipher;
 
 # util/virdaemon.h
+virDaemonLogConfigFree;
+virDaemonLogConfigNew;
 virDaemonSetupLogging;
 
 # util/virdbus.h

@@ -811,6 +811,7 @@ int main(int argc, char **argv) {
     mode_t old_umask;
     bool privileged = false;
     virLogDaemonConfigPtr config = NULL;
+    virDaemonLogConfigPtr log_config = NULL;
     int rv;
 
     struct option opts[] = {
@@ -913,8 +914,15 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    virDaemonSetupLogging((virDaemonLogConfigPtr)(&(config->log_level)),
-                           "virtlogd", privileged, verbose, godaemon);
+    if (!(log_config = virDaemonLogConfigNew(config->log_level,
+                                             config->log_filters,
+                                             config->log_outputs))) {
+        VIR_ERROR(_("Can't create log configuration"));
+        exit(EXIT_FAILURE);
+    }
+
+    virDaemonSetupLogging(log_config, "virtlogd",
+                          privileged, verbose, godaemon);
     if (!pid_file &&
         virPidFileConstructPath(privileged,
                                 RUNSTATEDIR,
@@ -1141,5 +1149,7 @@ int main(int argc, char **argv) {
     VIR_FREE(run_dir);
     VIR_FREE(remote_config_file);
     virLogDaemonConfigFree(config);
+    virDaemonLogConfigFree(log_config);
+
     return ret;
 }

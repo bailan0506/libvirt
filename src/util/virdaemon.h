@@ -41,6 +41,3 @@ virDaemonLogConfigNew(unsigned int log_level,
 
 void
 virDaemonLogConfigFree(virDaemonLogConfigPtr data);
-
-
-

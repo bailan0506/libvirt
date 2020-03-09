@@ -966,6 +966,7 @@ int main(int argc, char **argv) {
 # endif /* ! LIBVIRTD */
 #endif /* ! WITH_IP */
     struct daemonConfig *config;
+    virDaemonLogConfigPtr log_config = NULL;
     bool privileged = geteuid() == 0 ? true : false;
     bool implicit_conf = false;
     char *run_dir = NULL;
@@ -1096,8 +1097,14 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (virDaemonSetupLogging((virDaemonLogConfigPtr)(&(config->log_level)),
-                              DAEMON_NAME, privileged,
+    if (!(log_config = virDaemonLogConfigNew(config->log_level,
+                                             config->log_filters,
+                                             config->log_outputs))) {
+        VIR_ERROR(_("Can't create log configuration"));
+        exit(EXIT_FAILURE);
+    }
+
+    if (virDaemonSetupLogging(log_config, DAEMON_NAME, privileged,
                               verbose, godaemon) < 0) {
         VIR_ERROR(_("Can't initialize logging"));
         exit(EXIT_FAILURE);
@@ -1431,6 +1438,7 @@ int main(int argc, char **argv) {
 
     VIR_FREE(remote_config_file);
     daemonConfigFree(config);
+    virDaemonLogConfigFree(log_config);
 
     return ret;
 }

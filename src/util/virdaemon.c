@@ -22,6 +22,7 @@
 
 #include "virdaemon.h"
 #include "virlog.h"
+#include "viralloc.h"
 
 
 /*
@@ -72,4 +73,29 @@ virDaemonSetupLogging(virDaemonLogConfigPtr config,
         virLogSetOutputs(virLogGetDefaultOutput());
 
     return 0;
+}
+
+virDaemonLogConfigPtr
+virDaemonLogConfigNew(unsigned int log_level,
+                      char *log_filters,
+                      char *log_outputs)
+{
+    virDaemonLogConfigPtr ret;
+        
+    if (VIR_ALLOC(ret) < 0)
+        return NULL;
+
+    ret->log_level = log_level;
+    ret->log_filters = g_strdup(log_filters);
+    ret->log_outputs = g_strdup(log_outputs);
+       
+    return ret;
+}
+
+void
+virDaemonLogConfigFree(virDaemonLogConfigPtr data)
+{
+    VIR_FREE(data->log_filters);
+    VIR_FREE(data->log_outputs);
+    VIR_FREE(data);    
 }

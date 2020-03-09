@@ -33,3 +33,14 @@ struct _virDaemonLogConfig {
 int virDaemonSetupLogging(virDaemonLogConfigPtr config,
                           const char *output_fname,
                           bool privileged, bool verbose, bool godaemon);
+
+virDaemonLogConfigPtr
+virDaemonLogConfigNew(unsigned int log_level,
+                      char *log_filter,
+                      char *log_outputs);
+
+void
+virDaemonLogConfigFree(virDaemonLogConfigPtr data);
+
+
+
